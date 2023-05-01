@@ -3,29 +3,32 @@ local Path = require("hneutil.path")
 local Config = require("hnetxt-lua.config")
 
 local M = {}
+M.config = Config.get("journal")
 
-function M.add_command_to_parser(parser)
-    subparser = parser:command("journal", "commands for journals")
-    subparser:option("-n --name", "project name")
+function M.extend_parser(parser)
+    journal = parser:command("journal", "commands for journals")
+    -- journal:option("-n --name", "project name")
+    journal:argument("project", "name of the project"):args("?")
+    journal:option("-y --year", "year", os.date("%Y"))
+    journal:option("-m --month", "month", os.date("%m"))
 
-    return subparser
+    return journal
 end
 
 function M.run(args)
     local project
-    if args.name then
-        project = Project(args.name)
-    elseif Project.in_project(args.dir) then
-        project = Project.from_path(args.dir)
-    end
-
-    local path
-    if project then
-        path = project:get_journal_path()
+    if args.project then
+        project = Project(args.project)
     else
-        path = Path.joinpath(Config.get("journal").dir, os.date("%Y%m") .. ".md")
+        project = Project.from_path()
     end
 
+    local dir = M.config.dir
+    if project then
+        dir = Path.joinpath(project.root, M.config.project_dir)
+    end
+
+    local path = Path.joinpath(dir, string.format("%s%s.md", args.year, args.month))
     print(path)
 end
 

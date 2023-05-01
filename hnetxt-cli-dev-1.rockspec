@@ -23,6 +23,8 @@ build = {
       ["hnetxt-cli"] = "src/hnetxt-cli/init.lua",
       ["hnetxt-cli.journal"] = "src/hnetxt-cli/journal.lua",
       ["hnetxt-cli.project"] = "src/hnetxt-cli/project.lua",
+      ["hnetxt-cli.move"] = "src/hnetxt-cli/move.lua",
+      ["hnetxt-cli.goals"] = "src/hnetxt-cli/goals.lua",
       setup = "src/setup.lua"
    }
 }

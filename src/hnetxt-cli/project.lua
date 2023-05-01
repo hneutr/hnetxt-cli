@@ -6,7 +6,7 @@ local Registry = require("hnetxt-lua.project.registry")
 
 local M = {}
 
-function M.add_command_to_parser(parser)
+function M.extend_parser(parser)
     subparser = parser:command("project", "commands for projects")
 
     local create = subparser:command("create")

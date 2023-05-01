@@ -1,9 +1,6 @@
 #-------------------------------------------------------------------------------
 # [architecture]()
 #-------------------------------------------------------------------------------
-- project commands should:
-  - accept a project name
-  - infer the project name if in a project directory
 
 =-----------------------------------------------------------
 = [commands]()
@@ -15,6 +12,7 @@
 - `journal`: print the project's journal or the default journal (create if it doesn't exist)
 - TO IMPLEMENT:
   - `goals`: print the path to the current goals file (create if it doesn't exist)
+- `move`: moves files, updating mirrors and references
 
 =-----------------------------------------------------------
 = [existing]()
@@ -26,7 +24,6 @@
 - cli:
   - `project`:
     - `start`: begin a project
-    ⨉ `print_root`: print the root directory of a given project
     - `set_metadata`: set a project's metadata field to a value
     - `set_status`: set a project's status
     - `show_by_status`: show projects by their status

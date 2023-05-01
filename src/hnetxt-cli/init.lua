@@ -7,8 +7,10 @@ local Journal = require("hnetxt-cli.journal")
 M = {
     subparsers = {
         project = require("hnetxt-cli.project"),
-        journal = require("hnetxt-cli.journal")
-    }
+        journal = require("hnetxt-cli.journal"),
+        move = require("hnetxt-cli.move"),
+        goals = require("hnetxt-cli.goals"),
+    },
 }
 M.command_target = "command"
 
@@ -17,7 +19,7 @@ function M.parser()
     parser:command_target(M.command_target)
 
     for name, mod in pairs(M.subparsers) do
-        mod.add_command_to_parser(parser):command_target(M.subcommand_target(name))
+        mod.extend_parser(parser):command_target(M.subcommand_target(name))
     end
 
     return parser
