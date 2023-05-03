@@ -1,47 +1,18 @@
 require("approot")("/Users/hne/lib/hnetxt-cli/")
 
 local argparse = require("argparse")
-local Project = require("hnetxt-cli.project")
-local Journal = require("hnetxt-cli.journal")
+local Command = require("hnetxt-cli.command")
 
-M = {
-    subparsers = {
-        project = require("hnetxt-cli.project"),
-        journal = require("hnetxt-cli.journal"),
-        move = require("hnetxt-cli.move"),
-        goals = require("hnetxt-cli.goals"),
-    },
+local subparsers = {
+    project = require("hnetxt-cli.project"),
+    journal = require("hnetxt-cli.journal"),
+    move = require("hnetxt-cli.move"),
+    goals = require("hnetxt-cli.goals"),
 }
-M.command_target = "command"
 
-function M.parser()
-    local parser = argparse("hnetxt", "commands for hnetxt")
-    parser:command_target(M.command_target)
-
-    for name, mod in pairs(M.subparsers) do
-        mod.extend_parser(parser):command_target(M.subcommand_target(name))
-    end
-
-    return parser
+local parser = argparse("hnetxt", "commands for hnetxt")
+for subparser_name, subparser_commands in pairs(subparsers) do
+    Command():add(parser, subparser_name, subparser_commands)
 end
 
-function M.subcommand_target(name)
-    return name .. "_command"
-end
-
-function M.run()
-    local args = M.parser():parse()
-
-    local command = args.command
-
-    local subparser = M.subparsers[command]
-    local subcommand = args[M.subcommand_target(command)]
-
-    if subcommand then
-        subparser[subcommand](args)
-    else
-        subparser.run(args)
-    end
-end
-
-M.run()
+parser:parse()

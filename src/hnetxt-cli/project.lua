@@ -1,39 +1,43 @@
-require("approot")("/Users/hne/lib/hnetxt-cli/")
-
 local Path = require("hneutil.path")
+local Util = require("hnetxt-cli.util")
+
 local Project = require("hnetxt-lua.project")
 local Registry = require("hnetxt-lua.project.registry")
+local Flag = require("hnetxt-lua.text.flag")
 
-local M = {}
-
-function M.extend_parser(parser)
-    subparser = parser:command("project", "commands for projects")
-
-    local create = subparser:command("create")
-    create:option("-n --name", "project name")
-    create:option("-s --start-date", "start date of the project", os.date("%Y%m%d"))
-    create:option("-d --dir", "project directory", Path.cwd())
-
-    local root = subparser:command("root")
-    root:option("-n --name", "project name")
-    root:option("-d --dir", "project directory", Path.cwd())
-
-    return subparser
-end
-
-function M.create(args)
-    Project.create(args.name, args.dir)
-end
-
-function M.root(args)
-    local name = args.name
-
-    if not name then
-        name = Registry():get_entry_name(args.dir)
-    end
-
-    local project = Project(name)
-    print(project.root)
-end
-
-return M
+return {
+    description = "commands for projects",
+    commands = {
+        create = {
+            {"project", default = Path.name(Path.cwd()), args = "1"},
+            ["-s --start-date"] = {default = os.date("%Y%m%d")},
+            ["-d --dir"] = {default = Path.cwd(), description = "project directory"},
+            action = function(args)
+                Project.create(args.name, args.dir, {start_date = args.start_date})
+            end,
+        },
+        register = {
+            {"project", default = Path.name(Path.cwd()), args = "1"},
+            ["-d --dir"] = {default = Path.cwd(), description = "project directory"},
+            action = function(args)
+                Registry():set_entry(args.project, args.dir)
+            end,
+        },
+        root = {
+            {"project", description = "project name", default = Util.default_project(), args = "1"},
+            action = function(args)
+                print(Project(args.project).root)
+            end,
+        },
+        flags = {
+            {"project", description = "project name", default = Util.default_project(), args = "1"},
+            ["-f --flag"] = {default = 'question', description = "flag type"},
+            action = function(args)
+                local root = Project(args.project).root
+                for _, instance in ipairs(Flag.get_instances(args.flag, root)) do
+                    print(instance)
+                end
+            end,
+        }
+    }
+}
