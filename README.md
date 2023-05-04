@@ -25,7 +25,6 @@
     - `set_metadata`: set a project's metadata field to a value
     - `set_status`: set a project's status
     - `show_by_status`: show projects by their status
-    - `flags`: list items with a particular flag
   - `words`:
     - `unknown`: print an unknown word
   - `catalyze`: print catalysts

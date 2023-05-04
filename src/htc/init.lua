@@ -1,13 +1,14 @@
 require("approot")("/Users/hne/lib/hnetxt-cli/")
 
 local argparse = require("argparse")
-local Command = require("hnetxt-cli.command")
+local Command = require("htc.command")
 
 local subparsers = {
-    project = require("hnetxt-cli.project"),
-    journal = require("hnetxt-cli.journal"),
-    move = require("hnetxt-cli.move"),
-    goals = require("hnetxt-cli.goals"),
+    project = require("htc.project"),
+    journal = require("htc.journal"),
+    move = require("htc.move"),
+    goals = require("htc.goals"),
+    yaml = require("htc.yaml"),
 }
 
 local parser = argparse("hnetxt", "commands for hnetxt")

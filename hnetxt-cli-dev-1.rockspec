@@ -20,14 +20,15 @@ dependencies = {
 build = {
    type = "builtin",
    modules = {
-      ["hnetxt-cli"] = "src/hnetxt-cli/init.lua",
-      ["hnetxt-cli.command"] = "src/hnetxt-cli/command.lua",
-      ["hnetxt-cli.util"] = "src/hnetxt-cli/util.lua",
-      ["hnetxt-cli.journal"] = "src/hnetxt-cli/journal.lua",
-      ["hnetxt-cli.project"] = "src/hnetxt-cli/project.lua",
-      ["hnetxt-cli.move"] = "src/hnetxt-cli/move.lua",
-      ["hnetxt-cli.goals"] = "src/hnetxt-cli/goals.lua",
-      setup = "src/setup.lua"
+      ["htc"] = "src/htc/init.lua",
+      ["htc.command"] = "src/htc/command.lua",
+      ["htc.util"] = "src/htc/util.lua",
+      ["htc.journal"] = "src/htc/journal.lua",
+      ["htc.project"] = "src/htc/project.lua",
+      ["htc.move"] = "src/htc/move.lua",
+      ["htc.goals"] = "src/htc/goals.lua",
+      ["htc.yaml"] = "src/htc/yaml.lua",
+      ["htc.colors"] = "src/htc/colors.lua",
    }
 }
 test = {

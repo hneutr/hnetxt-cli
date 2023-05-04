@@ -1,7 +1,7 @@
 require("approot")("/Users/hne/lib/hnetxt-cli/")
 
-local Path = require("hneutil.path")
-local Registry = require("hnetxt-lua.project.registry")
+local Path = require("hl.path")
+local Registry = require("htl.project.registry")
 
 local M = {}
 

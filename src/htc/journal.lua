@@ -1,5 +1,5 @@
-local Util = require("hnetxt-cli.util")
-local Journal = require("hnetxt-lua.journal")
+local Util = require("htc.util")
+local Journal = require("htl.journal")
 
 return {
     description = "get the path to a particular project and/or period's journal",

@@ -1,4 +1,4 @@
-local Goals = require("hnetxt-lua.goals")
+local Goals = require("htl.goals")
 return {
     description = "get the path to a particular period's goals",
     ["-y --year"] = {default = os.date("%Y")},

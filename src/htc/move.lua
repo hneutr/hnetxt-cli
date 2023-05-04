@@ -1,5 +1,5 @@
-local Path = require("hneutil.path")
-local Operator = require("hnetxt-lua.project.move.operator")
+local Path = require("hl.path")
+local Operator = require("htl.project.move.operator")
 
 return {
     description = "move things within a project",

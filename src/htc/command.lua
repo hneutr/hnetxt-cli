@@ -1,14 +1,15 @@
 require("approot")("/Users/hne/lib/hnetxt-cli/")
 
-table = require("hneutil.table")
-string = require("hneutil.string")
+table = require("hl.table")
+string = require("hl.string")
 
-local Object = require('hneutil.object')
+local Object = require('hl.object')
 
 local Component = Object:extend()
 Component.keys = {
     "description",
     "action",
+    "target",
 }
 Component.type = ''
 
@@ -62,12 +63,34 @@ Option.keys = table.list_extend({}, Component.keys, {
     'default',
     'convert',
     'count',
+    'args',
 })
 
 function Option.get_subcomponents(settings)
     local subcomponent_settings = {}
     for name, subsettings in pairs(settings or {}) do
-        if type(name) == 'string' and name:startswith("-") then
+        if type(name) == 'string' and name:startswith("-") and not subsettings.flag then
+            subcomponent_settings[name] = subsettings
+        end
+    end
+    return subcomponent_settings
+end
+
+--------------------------------------------------------------------------------
+--                                    Flag                                    --
+--------------------------------------------------------------------------------
+local Flag = Component:extend()
+Flag.type = 'flag'
+Flag.keys = table.list_extend({}, Component.keys, {
+    'default',
+    'convert',
+    'count',
+})
+
+function Flag.get_subcomponents(settings)
+    local subcomponent_settings = {}
+    for name, subsettings in pairs(settings or {}) do
+        if type(name) == 'string' and name:startswith("-") and subsettings.flag == true then
             subcomponent_settings[name] = subsettings
         end
     end
@@ -93,6 +116,7 @@ function Command:add(parent, name, settings)
 
     Argument():add_subcomponents(object, settings)
     Option():add_subcomponents(object, settings)
+    Flag():add_subcomponents(object, settings)
     self:add_subcomponents(object, settings)
 
     return object
