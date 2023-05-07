@@ -75,7 +75,7 @@ function get_entry_list_strings(metadata_by_path, dir, date_sort, indent)
             pre = pre .. Colors("%{green}" .. metadata_by_path[path].date .. "%{reset}")
         end
 
-        if pre:len() > 0 then
+        if #pre > 0 then
             str = string.format("%s: %s", pre, str)
         end
         table.insert(strings, str)
@@ -114,7 +114,6 @@ return {
             ["--not-by-dir"] = {flag = true, default = true, target = 'by_dir', action = "store_false"},
             ["--dir"] = {default = Path.cwd()},
             action = function(args)
-
                 local lines = {}
                 if args.by_dir then
                     local results = dirs_by_level(args.dir)
