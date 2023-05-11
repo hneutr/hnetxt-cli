@@ -7,7 +7,12 @@ local Project = require("htl.project")
 local NotesRegistry = require("htl.project.notes")
 local Util = require("htc.util")
 
-local function set_project_notes(args, _, project_name)
+local function set_notes_registry(args, _, project_name)
+    print(require("inspect")(args))
+    print(require("inspect")(_))
+    print(require("inspect")(project_name))
+    print(require("inspect")("wumba"))
+    project_name = project_name or Util.default_project()
     if not project_name then
         print("Provide a project.")
         os.exit()
@@ -50,15 +55,6 @@ local function set_entry_sets(args)
     end
 
     return entry_sets
-end
-
-local function set_entry_set(args)
-    print(require("inspect")(args))
-    -- local entry_set = find_entry_set(args, args.notes_registry)
-    -- if notes_registry.entry_sets[entry_set] then
-    --     return entry_set
-    -- end
-    -- return nil
 end
 
 local function parse_path(args)
@@ -107,11 +103,35 @@ local params = {
     path = {"path", args = "1"},
     project = {
         key = "-p --project",
-        val = {args = "1", default=Util.default_project(), action = set_project_notes},
+        val = {
+            default = Util.default_project() or "",
+            target = 'notes_registry',
+            convert = function(project_name)
+                print(require("inspect")("111"))
+                if #project_name == 0 then
+                    print("Provide a project.")
+                    os.exit()
+                else
+                    return NotesRegistry.from_project_name(project_name)
+                end
+            end,
+        },
     },
     entry_set = {
         key = "-e --entry_set",
-        val = {args = "?", action=set_entry_set},
+        val = {
+            args = "1",
+            default = "",
+            action = function(args)
+                print(require("inspect")("hi"))
+                -- print(require("inspect")(args))
+                -- local entry_set = find_entry_set(args, args.notes_registry)
+                -- if notes_registry.entry_sets[entry_set] then
+                --     return entry_set
+                -- end
+                -- return nil
+            end,
+        },
     },
     metadata = {key = "-m --metadata", val = {args = "*", action = key_val_parse, init = {}}},
     field = {key = "-f --field", val = {args = "*", action = append_to_args, init = {}}},
@@ -141,8 +161,9 @@ return {
                     [params.entry_set.key] = params.entry_set.val,
                     [params.metadata.key] = params.metadata.val,
                     action = function(args)
-                        print(require("inspect")("chumba"))
-                        print(require("inspect")(args))
+                        -- print(require("inspect")("fuck me"))
+                        -- print(require("inspect")(args))
+                        -- print(require("inspect")(args))
                         -- local notes_registry = set_project_notes(args)
                         -- local entry_set = get_entry_set(args, notes_registry)
                         -- print(require("inspect")(entry_set))

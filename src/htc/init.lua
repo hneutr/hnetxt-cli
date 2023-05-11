@@ -4,10 +4,10 @@ local argparse = require("argparse")
 local Command = require("htc.command")
 
 local subparsers = {
-    project = require("htc.project"),
-    journal = require("htc.journal"),
-    move = require("htc.move"),
-    goals = require("htc.goals"),
+    -- project = require("htc.project"),
+    -- journal = require("htc.journal"),
+    -- move = require("htc.move"),
+    -- goals = require("htc.goals"),
     notes = require("htc.notes"),
 }
 

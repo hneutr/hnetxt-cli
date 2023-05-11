@@ -30,7 +30,9 @@ function Component.get_subcomponents(settings)
 end
 
 function Component:add_subcomponents(parent, settings)
-    for name, subsettings in pairs(self.get_subcomponents(settings)) do
+    local subcomponents = self.get_subcomponents(settings)
+
+    for name, subsettings in pairs(subcomponents) do
         self:add(parent, name, subsettings)
     end
 end
@@ -74,6 +76,7 @@ function Option.get_subcomponents(settings)
             subcomponent_settings[name] = subsettings
         end
     end
+    print(require("inspect")(subcomponent_settings))
     return subcomponent_settings
 end
 
