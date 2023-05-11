@@ -64,6 +64,7 @@ Option.keys = table.list_extend({}, Component.keys, {
     'convert',
     'count',
     'args',
+    'init',
 })
 
 function Option.get_subcomponents(settings)

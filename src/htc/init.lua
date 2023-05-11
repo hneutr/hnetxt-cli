@@ -8,7 +8,7 @@ local subparsers = {
     journal = require("htc.journal"),
     move = require("htc.move"),
     goals = require("htc.goals"),
-    yaml = require("htc.yaml"),
+    notes = require("htc.notes"),
 }
 
 local parser = argparse("hnetxt", "commands for hnetxt")
