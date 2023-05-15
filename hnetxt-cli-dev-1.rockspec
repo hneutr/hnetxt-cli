@@ -26,6 +26,7 @@ build = {
       ["htc.journal"] = "src/htc/journal.lua",
       ["htc.project"] = "src/htc/project.lua",
       ["htc.move"] = "src/htc/move.lua",
+      ["htc.remove"] = "src/htc/remove.lua",
       ["htc.goals"] = "src/htc/goals.lua",
       ["htc.notes"] = "src/htc/notes.lua",
       ["htc.colors"] = "src/htc/colors.lua",

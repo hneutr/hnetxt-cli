@@ -6,6 +6,7 @@ string = require("hl.string")
 local Object = require('hl.object')
 
 local Component = Object:extend()
+Component.config_key = 'comp'
 Component.keys = {
     "description",
     "action",
@@ -25,15 +26,9 @@ function Component:add(parent, name, settings)
     return object
 end
 
-function Component.get_subcomponents(settings)
-    return {}
-end
-
 function Component:add_subcomponents(parent, settings)
-    local subcomponents = self.get_subcomponents(settings)
-
-    for name, subsettings in pairs(subcomponents) do
-        self:add(parent, name, subsettings)
+    for _, subsettings in ipairs(settings[self.config_key] or {}) do
+        self:add(parent, subsettings[1], subsettings)
     end
 end
 
@@ -41,6 +36,7 @@ end
 --                                  Argument                                  --
 --------------------------------------------------------------------------------
 local Argument = Component:extend()
+Argument.config_key = 'args'
 Argument.type = 'argument'
 Argument.keys = table.list_extend({}, Component.keys, {
     'default',
@@ -48,19 +44,12 @@ Argument.keys = table.list_extend({}, Component.keys, {
     'args',
 })
 
-function Argument.get_subcomponents(settings)
-    local subcomponent_settings = {}
-    for _, subsettings in ipairs(settings) do
-        subcomponent_settings[subsettings[1]] = subsettings
-    end
-    return subcomponent_settings
-end
-
 --------------------------------------------------------------------------------
 --                                   Option                                   --
 --------------------------------------------------------------------------------
 local Option = Component:extend()
 Option.type = 'option'
+Option.config_key = 'opts'
 Option.keys = table.list_extend({}, Component.keys, {
     'default',
     'convert',
@@ -69,21 +58,11 @@ Option.keys = table.list_extend({}, Component.keys, {
     'init',
 })
 
-function Option.get_subcomponents(settings)
-    local subcomponent_settings = {}
-    for name, subsettings in pairs(settings or {}) do
-        if type(name) == 'string' and name:startswith("-") and not subsettings.flag then
-            subcomponent_settings[name] = subsettings
-        end
-    end
-    print(require("inspect")(subcomponent_settings))
-    return subcomponent_settings
-end
-
 --------------------------------------------------------------------------------
 --                                    Flag                                    --
 --------------------------------------------------------------------------------
 local Flag = Component:extend()
+Flag.config_key = 'flags'
 Flag.type = 'flag'
 Flag.keys = table.list_extend({}, Component.keys, {
     'default',
@@ -91,28 +70,21 @@ Flag.keys = table.list_extend({}, Component.keys, {
     'count',
 })
 
-function Flag.get_subcomponents(settings)
-    local subcomponent_settings = {}
-    for name, subsettings in pairs(settings or {}) do
-        if type(name) == 'string' and name:startswith("-") and subsettings.flag == true then
-            subcomponent_settings[name] = subsettings
-        end
-    end
-    return subcomponent_settings
-end
-
 --------------------------------------------------------------------------------
 --                                  Command                                   --
 --------------------------------------------------------------------------------
 local Command = Component:extend()
 Command.type = 'command'
+Command.config_key = 'commands'
 Command.keys = table.list_extend({}, Component.keys, {
     "command_target",
     "require_command",
 })
 
-function Command.get_subcomponents(settings)
-    return settings.commands or {}
+function Command:add_subcomponents(parent, settings)
+    for key, subsettings in pairs(settings[self.config_key] or {}) do
+        self:add(parent, key, subsettings)
+    end
 end
 
 function Command:add(parent, name, settings)

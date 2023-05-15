@@ -3,23 +3,8 @@ string = require("hl.string")
 local Yaml = require("hl.yaml")
 local Path = require("hl.path")
 local Colors = require("htc.colors")
-local Project = require("htl.project")
 local NotesRegistry = require("htl.project.notes")
 local Util = require("htc.util")
-
-local function set_notes_registry(args, _, project_name)
-    print(require("inspect")(args))
-    print(require("inspect")(_))
-    print(require("inspect")(project_name))
-    print(require("inspect")("wumba"))
-    project_name = project_name or Util.default_project()
-    if not project_name then
-        print("Provide a project.")
-        os.exit()
-    end
-
-    args.notes_registry = NotesRegistry.from_project_name(project_name)
-end
 
 local function find_entry_set(args, notes_registry)
     if args.entry_set then
@@ -45,69 +30,42 @@ local function set_entry_sets(args)
 
     local entry_sets = {}
     if entry_set then
-        for _, entry_set in ipairs(table.keys(notes_registry.entry_sets)) do
+        for _, entry_set in ipairs(table.keys(args.notes_registry.entry_sets)) do
             if entry_set:startswith(args.entry_set) then
                 table.insert(entry_sets, entry_set)
             end
         end
     else
-        entry_sets = table.keys(notes_registry.entry_sets)
+        entry_sets = table.keys(args.notes_registry.entry_sets)
     end
 
     return entry_sets
 end
 
-local function parse_path(args)
 
-    if Path.is_relative_to(Path.cwd(), registry.root) then
-        dir = Path.cwd()
-    else
-        dir = registry.root
-    end
+local function require_entry_set_type(args, requirement)
+    local entry_set = args.entry_set
 
-end
-
-local function map_field_values(fields, values)
-    local map = {}
-    for i, field in ipairs(fields) do
-        map[field] = values[i]
-    end
-    return map
-end
-
-local function append_to_args(args, key, values)
-    for _, value in ipairs(values) do
-        table.insert(args[key], value)
-    end
-end
-
-local function key_val_parse(args, args_key, key_val_list)
-    for _, key_val in ipairs(key_val_list) do
-        local key, val = unpack(key_val:split('='))
-
-        if val:find(",") then
-            val = val:split(',')
-        end
-
-        if val == 'true' then
-            val = true
-        elseif val == 'false' then
-            val = false
-        end
-
-        args[args_key][key] = val
+    if entry_set and entry_set.type ~= requirement then
+        print(entry_set .. " is not a " .. requirement)
+        os.exit()
     end
 end
 
 local params = {
-    path = {"path", args = "1"},
-    project = {
-        key = "-p --project",
-        val = {
+    args = {
+        path = {
+            "path",
+            args = "1",
+            convert = Path.resolve,
+        },
+    },
+    opts = {
+        project = {
+            "-p --project",
             default = Util.default_project() or "",
             target = 'notes_registry',
             convert = function(project_name)
-                print(require("inspect")("111"))
                 if #project_name == 0 then
                     print("Provide a project.")
                     os.exit()
@@ -116,36 +74,37 @@ local params = {
                 end
             end,
         },
-    },
-    entry_set = {
-        key = "-e --entry_set",
-        val = {
+        entry_set = {
+            "-e --entry_set",
             args = "1",
             default = "",
             action = function(args)
-                print(require("inspect")("hi"))
-                -- print(require("inspect")(args))
-                -- local entry_set = find_entry_set(args, args.notes_registry)
-                -- if notes_registry.entry_sets[entry_set] then
-                --     return entry_set
-                -- end
-                -- return nil
+                if args.entry_set and #args.entry_set > 0 then
+                    return
+                end
+
+                local p = Path.relative_to(args.path, args.notes_registry.root)
+                local entry_sets = table.keys(args.notes_registry.entry_sets)
+
+                table.sort(entry_sets, function(a, b) return #a > #b end)
+
+                for _, entry_set in ipairs(entry_sets) do
+                    if Path.is_relative_to(p, entry_set) then
+                        args.entry_set = args.notes_registry.entry_sets[entry_set]
+                        return args.entry_set
+                    end
+                end
             end,
         },
-    },
-    metadata = {key = "-m --metadata", val = {args = "*", action = key_val_parse, init = {}}},
-    field = {key = "-f --field", val = {args = "*", action = append_to_args, init = {}}},
-    value = {key = "-v --value", val = {args = "*"}},
-    index = {key = "-i --index", val = {description = "index to work on"}},
-    to = {key = "-t --to", val = {description = "destination"}},
-    date = {key = "-d --date", val = {description = "date", default = os.date("%Y%m%d")}},
-    response = {
-        key = "-r --response",
-        val = {
-            flag = true,
-            default = false,
-            description = "operate on a response",
-            action = "store_true",
+        metadata = {
+            "-m --metadata",
+            args = "*",
+            init = {},
+            action = Util.key_val_parse,
+        },
+        date = {
+            '-d --date',
+            default = os.date('%Y%m%d'),
         },
     },
 }
@@ -153,218 +112,47 @@ local params = {
 return {
     description = "commands for notes",
     commands = {
-        entry = {
-            commands = {
-                new = {
-                    params.path,
-                    [params.project.key] = params.project.val,
-                    [params.entry_set.key] = params.entry_set.val,
-                    [params.metadata.key] = params.metadata.val,
-                    action = function(args)
-                        -- print(require("inspect")("fuck me"))
-                        -- print(require("inspect")(args))
-                        -- print(require("inspect")(args))
-                        -- local notes_registry = set_project_notes(args)
-                        -- local entry_set = get_entry_set(args, notes_registry)
-                        -- print(require("inspect")(entry_set))
-                        -- local path = parse_path(args)
-                        -- local location = args.location
-                    end,
-                },
-            }
+        list = {
+            action = function(args)
+                print(require("inspect")("list"))
+            end,
         },
-        field = {
-            commands = {
-                -- TODO
-                ls = {
-                    [params.project.key] = params.project.val,
-                    {"entry_set", args = "?"},
-                    action = function(args)
-                        local notes_registry = set_project_notes(args)
-                        local entry_sets = get_entry_sets(args, notes_registry)
-
-                        print(require("inspect")(entry_sets))
-                        -- local path = parse_path(args)
-                    end,
-                },
+        new = {
+            args = {params.args.path},
+            action = function(args)
                 --[[
-                -- TODO
-                rm = {
-                    params.field.key = params.field.val,
-                    action = function(args)
-                        print(require("inspect")("field:remove"))
-                        print(require("inspect")(args))
-                    end,
-                },
-                -- TODO
-                mv = {
-                    params.field.key = params.field.val,
-                    params.to.key = params.to.val,
-                    action = function(args)
-                        print(require("inspect")("field:rename"))
-                        print(require("inspect")(args))
-                    end,
-                },
+                :new_entry should:
+                    - take an absolute path
+                    - create a file with the default metadata for the entry_set
+                
+                That's it.
+                - path should not be modified.
+                - doesn't accept metadata
                 --]]
+                -- print(require("inspect")(table.keys(args.notes_registry.entry_sets)))
+            end,
+        },
+        respond = {
+            args = {
+                {params.args.path},
+                {"response_name", args = "?", default = os.date("%Y%m%d")},
             },
+            opts = {
+                params.opts.project,
+                params.opts.entry_set,
+            },
+            action = function(args)
+            end,
+        },
+        responses = {
+            args = {params.args.path},
+            flags = {{"-a --all", default = false, description = "show all", action = "store_true"}},
+            action = function(args) 
+                require_entry_set_type(args, 'prompt')
+            end,
         },
     },
 }
-
---- common params:
---  * `-f --field`: field to set a value for (repeatable: `-f FIELD1 -v VALUE1 -f FIELD2 -v VALUE2`)
---  * `-v --value`: value of the field
---[[
-local subparsers = {
-    params.location,
-    entry = {
-        commands = {
-            new = {
-                params.field.key = params.field.val,
-                params.value.key = params.value.val,
-                action = function(args)
-                    local location = args.location
-                    local fields_map = map_field_values(args.fields, args.values)
-                    print(require("inspect")(args))
-                    -- use :new_entry
-                    -- put all things that non-entry-paths will need into metadata dict
-                end,
-            },
-            set = {
-                params.field.key = params.field.val,
-                params.value.key = params.value.val,
-                params.index.key = params.index.val,
-                action = function(args)
-                    print(require("inspect")("entry:set"))
-                    print(require("inspect")(args))
-                    -- use :set_metadata
-                end,
-            },
-            mv = {
-                action = function(args)
-                    print(require("inspect")("entry:mv"))
-                    print(require("inspect")(args))
-                end,
-            },
-            rm = {
-                params.index.key = params.index.val,
-                params.date.key = params.date.val,
-                params.response.key = params.response.val,
-                action = function(args)
-                    print(require("inspect")("entry:rm"))
-                    print(require("inspect")(args))
-                end,
-            },
-            path = {
-                params.index.key = params.index.val,
-                params.date.key = params.date.val,
-                params.response.key = params.response.val,
-                action = function(args)
-                    print(require("inspect")("entry:path"))
-                    print(require("inspect")(args))
-                    -- put all things that non-entry-paths will need into metadata dict
-                end,
-            },
-            -- this is just an alias for `path`, involves stuff on the shell side
-            -- edit = {
-            --     params.index.key = params.index.val,
-            --     params.date.key = params.date.val,
-            --     params.response.key = params.response.val,
-            --     action = function(args)
-            --         print(require("inspect")("entry:edit"))
-            --         print(require("inspect")(args))
-            --     end,
-            -- },
-            paths = {
-                action = function(args)
-                    print(require("inspect")("entry:paths"))
-                    print(require("inspect")(args))
-                end,
-            },
-            ----------------------------------[ prompts ]-----------------------------------
-            -- for prompt entries
-            close = {
-                action = function(args)
-                    print(require("inspect")("entry:close"))
-                    print(require("inspect")(args))
-                    -- use :close
-                end,
-            },
-            reopen = {
-                action = function(args)
-                    print(require("inspect")("entry:reopen"))
-                    print(require("inspect")(args))
-                    -- use :reopen
-                end,
-            },
-            response = {
-                ["-a --all"] = {flag = true, default = false, description = "show all", action = "store_true"},
-                action = function(args)
-                    print(require("inspect")("entry:response"))
-                    print(require("inspect")(args))
-                    -- use :response
-                end,
-            },
-            respond = {
-                action = function(args)
-                    print(require("inspect")("entry:respond"))
-                    print(require("inspect")(args))
-                    -- use :respond
-                end,
-            },
-            ---------------------------------[ responses ]----------------------------------
-            pin = {
-                params.date.key = params.date.val,
-                action = function(args)
-                    print(require("inspect")("entry:pin"))
-                    print(require("inspect")(args))
-                    -- use :pin
-                end,
-            },
-            unpin = {
-                params.date.key = params.date.val,
-                action = function(args)
-                    print(require("inspect")("entry:unpin"))
-                    print(require("inspect")(args))
-                    -- use :unpin
-                end,
-            },
-            -- TODO
-            list = {
-                params.field.key = params.field.val,
-                params.value.key = params.value.val,
-                ["--no-date-sort"] = {flag = true, default = true, target = 'date_sort', action = "store_false"},
-                ["--by-field"] = {default = 'none', description = "sort by field"},
-                action = function(args)
-                    print(require("inspect")("entry:list"))
-                    print(require("inspect")(args))
-                end,
-            },
-        },
-    },
-    value = {
-        params.field.key = params.field.val,
-        params.value.key = params.value.val,
-        commands = {
-            -- TODO
-            rm = {
-                action = function(args)
-                    print(require("inspect")("val:remove"))
-                    print(require("inspect")(args))
-                end,
-            },
-            -- TODO
-            mv = {
-                params.to.key = params.to.val,
-                action = function(args)
-                    print(require("inspect")("val:rename"))
-                    print(require("inspect")(args))
-                end,
-            },
-        },
-    },
-}
---]]
 
 --[[
 
