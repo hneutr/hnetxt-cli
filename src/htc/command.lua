@@ -1,9 +1,8 @@
 require("approot")("/Users/hne/lib/hnetxt-cli/")
 
-table = require("hl.table")
 string = require("hl.string")
 local Dict = require("hl.Dict")
-local List = require("hl.List")
+local List = require("hl.PList")
 
 local Object = require('hl.object')
 
@@ -77,7 +76,7 @@ end
 local Argument = Component:extend()
 Argument.config_key = 'args'
 Argument.type = 'argument'
-Argument.keys = table.list_extend({}, Component.keys, {
+Argument.keys = List.from(Component.keys, {
     'default',
     'convert',
     'args',
@@ -96,7 +95,7 @@ end
 local Option = Component:extend()
 Option.type = 'option'
 Option.config_key = 'opts'
-Option.keys = table.list_extend({}, Component.keys, {
+Option.keys = List.from(Component.keys, {
     'default',
     'convert',
     'count',
@@ -116,7 +115,7 @@ end
 local Flag = Component:extend()
 Flag.config_key = 'flags'
 Flag.type = 'flag'
-Flag.keys = table.list_extend({}, Component.keys, {
+Flag.keys = List.from(Component.keys, {
     'default',
     'convert',
     'count',
@@ -174,7 +173,7 @@ end
 local Command = Component:extend()
 Command.type = 'command'
 Command.config_key = 'commands'
-Command.keys = table.list_extend({}, Component.keys, {
+Command.keys = List.from(Component.keys, {
     "command_target",
     "require_command",
 })

@@ -1,4 +1,4 @@
-table = require("hl.table")
+local Dict = require("hl.Dict")
 local Path = require("hl.path")
 local Util = require("htc.util")
 local Colors = require("htc.colors")
@@ -40,7 +40,7 @@ return {
             {"+f --flag", default = 'question', description = "flag type"},
             action = function(args)
                 local instances = Flag.get_instances(args.flag, Project(args.project).root)
-                local paths = table.keys(instances)
+                local paths = Dict.keys(instances)
                 table.sort(paths)
 
                 for _, path in ipairs(paths) do
@@ -56,7 +56,7 @@ return {
             {"-l --list_type", default = 'question', description = "list type"},
             action = function(args)
                 local instances = List.Parser.get_instances(args.list_type, Project(args.project).root)
-                local paths = table.keys(instances)
+                local paths = Dict.keys(instances)
                 table.sort(paths)
 
                 for _, path in ipairs(paths) do
