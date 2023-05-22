@@ -7,6 +7,13 @@ local Notes = require("htl.notes")
 local Util = require("htc.util")
 local Object = require('hl.object')
 
+local metadata_format_help_text = "\n" .. string.join("\n", {
+    "* k=v → {k = v}",
+    "* k   → {k}",
+    "* k+  → {k = true}",
+    "* k-  → {k = false}",
+})
+
 --------------------------------------------------------------------------------
 --                                  Printer                                   --
 --------------------------------------------------------------------------------
@@ -167,7 +174,13 @@ function FilePrinter:setup()
 end
 
 function FilePrinter:note_value(note)
-    return note[self.args.show_note]
+    local value = note[self.args.show_note]
+
+    if self.args.clean_note_content then
+        value = value:gsub("-", " ")
+    end
+
+    return value
 end
 
 function FilePrinter:note_sort_value(note)
@@ -340,6 +353,56 @@ end
 --------------------------------------------------------------------------------
 --                                                                            --
 --                                                                            --
+--                                    meta                                    --
+--                                                                            --
+--                                                                            --
+--------------------------------------------------------------------------------
+local meta_help_text = "\n" .. string.join("\n", {
+    "* k=v → {key = 'k', val = 'v'}",
+    "* k   → {key = 'k'}",
+    "* k+  → {key = 'k', val = true}",
+    "* k-  → {key = 'k', val = false}",
+})
+
+
+function parse_meta_key_val(args, args_key, raw)
+    local key, val
+    if raw:find("%=") then
+        key, val = unpack(raw:split("="))
+    else
+        key = raw
+    end
+
+    if val == "+" then
+        val = true
+    elseif val == "-" then
+        val = false
+    end
+
+    if key:endswith('+') then
+        key = key:removesuffix("+")
+        val = true
+    elseif key:endswith('-') then
+        key = key:removesuffix("-")
+        val = false
+    end
+
+    if val == 'true' then
+        val = true
+    elseif val == 'false' then
+        val = false
+    end
+
+    if tonumber(val) then
+        val = tonumber(val)
+    end
+    
+    args[args_key] = {key = key, val = val}
+end
+
+--------------------------------------------------------------------------------
+--                                                                            --
+--                                                                            --
 --                                  commands                                  --
 --                                                                            --
 --                                                                            --
@@ -380,23 +443,15 @@ return {
                 description = "if -m, exclude unexpected values.",
                 action = Util.store("expected"),
             },
+            {"+n", target = "show_notes", description = "if -m, show note content.", switch = "on"},
             {
                 "-f",
-                description = string.join(
-                    "\n",
-                    {
-                        "metadata to filter entries by.",
-                        "* -f k=v → {k = v}",
-                        "* -f k   → {k}",
-                        "* -f k+  → {k = true}",
-                        "* -f k-  → {k = false}",
-                    }
-                ),
+                description = "metadata to filter entries by." .. metadata_format_help_text,
                 target = "filters",
                 init = {},
                 args = "*",
                 action = Util.key_val_parse,
-                argname = "FILTER",
+                argname = "METADATA",
             },
             {
                 "-g",
@@ -405,14 +460,15 @@ return {
                 init = {},
                 args = "*",
                 action = Util.key_val_parse,
+                argname = "METADATA",
             },
             {"+F", target = "apply_config_filters", description = "don't apply config filters", switch = "off"},
-            {"+D", target = "sort_by_date", description = "sort by date.", switch = "off"},
+            {"+D", target = "sort_by_date", description = "don't sort by date.", switch = "off"},
             {"+d", target = "show_date", description = "show note date.", switch = "on"},
-            {"--show-note", hidden = true, default = "clean_stem", action = Util.store_default("clean_stem")},
+            {"--show-note", hidden = true, default = "stem", action = Util.store_default("stem")},
             {"+b", target = "show_note", description = "show note blurb.", action = Util.store('blurb')},
-            {"+p", target = "show_note", description = "show raw note path.", action = Util.store('name')},
-            {"+n", target = "show_notes", description = "show note content when listing metadata.", switch = "on"},
+            {"+p", target = "show_note", description = "show note path.", action = Util.store('name')},
+            {"+C", target = "clean_note_content", description = "don't clean note content", switch = "off"},
             mutexes = {
                 {"-u", "-e"},
                 {"-b", "-p"},
@@ -420,17 +476,61 @@ return {
             action = function(args)
                 if not args.list_metadata then
                     args.value_type = nil
+                    args.filters = Dict.update({}, args.group_by_metadata, args.filters)
                 end
 
-                local note_sets = Notes.path_sets(args.path)
-
                 local notes = List()
-                for _, note_set in pairs(note_sets) do
-                    notes:extend(note_set:list(args.path))
+                for _, note_file in ipairs(Notes.path_files(args.path)) do
+                    if args.apply_config_filters then
+                        note_file.filters = Dict.update(args.filters, note_file.filters)
+                    end
+
+                    notes:append(note_file:get_list_info(args.value_type_condition, args.path))
                 end
 
                 SetPrinter(notes, args):print()
             end,
+        },
+        meta = {
+            description = "commands for handling metadata",
+            commands = {
+                rm = {
+                    description = "remove a field or field:value",
+                    {"source", args = "1", action = parse_meta_key_val, description = "remove." .. meta_help_text},
+                    {"path", args = "1", default = '.', convert = Path.resolve},
+                    action = function(args)
+                        for _, note_file in ipairs(Notes.path_files(args.path)) do
+                            note_file:remove_metadata(args.source.key, args.source.val)
+                        end
+                    end,
+                },
+                mv = {
+                    description = "change a field or field:value",
+                    {"source", args = "1", action = parse_meta_key_val, description = "source." .. meta_help_text},
+                    {"target", args = "1", action = parse_meta_key_val, description = "target. format like source."},
+                    {"path", args = "1", default = '.', convert = Path.resolve},
+                    action = function(args)
+                        for _, note_file in ipairs(Notes.path_files(args.path)) do
+                            note_file:move_metadata(
+                                args.source.key,
+                                args.source.val,
+                                args.target.key,
+                                args.target.val
+                            )
+                        end
+                    end,
+                },
+                flatten = {
+                    description = "turn a list field into a string field.",
+                    {"field", args = "1", description = "field."},
+                    {"path", args = "1", default = '.', convert = Path.resolve},
+                    action = function(args)
+                        for _, note_file in ipairs(Notes.path_files(args.path)) do
+                            note_file:flatten_metadata(args.field)
+                        end
+                    end,
+                },
+            }
         },
     },
 }
