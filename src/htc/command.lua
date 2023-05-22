@@ -2,7 +2,7 @@ require("approot")("/Users/hne/lib/hnetxt-cli/")
 
 string = require("hl.string")
 local Dict = require("hl.Dict")
-local List = require("hl.PList")
+local List = require("hl.List")
 
 local Object = require('hl.object')
 
