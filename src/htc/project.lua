@@ -21,25 +21,23 @@ return {
     description = "commands for projects",
     commands = {
         create = {
-            args = {args.new_project},
-            opts = {
-                {"-s --start-date", default = os.date("%Y%m%d")},
-                opts.dir,
-            },
+            args.new_project,
+            {"-s --start-date", default = os.date("%Y%m%d")},
+            opts.dir,
             action = function(args) Project.create(args.name, args.dir, {start_date = args.start_date}) end,
         },
         register = {
-            args = {args.new_project},
-            opts = {opts.dir},
+            args.new_project,
+            opts.dir,
             action = function(args) Registry():set_entry(args.project, args.dir) end,
         },
         root = {
-            args = {args.project},
+            args.project,
             action = function(args) print(Project(args.project).root) end,
         },
         flags = {
-            args = {args.project},
-            opts = {{"-f --flag", default = 'question', description = "flag type"}},
+            args.project,
+            {"+f --flag", default = 'question', description = "flag type"},
             action = function(args)
                 local instances = Flag.get_instances(args.flag, Project(args.project).root)
                 local paths = table.keys(instances)
@@ -54,8 +52,8 @@ return {
             end,
         },
         list = {
-            args = {args.project},
-            opts = {{"-l --list_type", default = 'question', description = "list type"}},
+            args.project,
+            {"-l --list_type", default = 'question', description = "list type"},
             action = function(args)
                 local instances = List.Parser.get_instances(args.list_type, Project(args.project).root)
                 local paths = table.keys(instances)

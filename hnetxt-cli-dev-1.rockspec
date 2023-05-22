@@ -14,8 +14,6 @@ dependencies = {
    "lyaml >= 6.2",
    "inspect >= 3.1",
    "lua-cjson >= 2.1",
-   "hneutil-lua",
-   "hnetxt-lua"
 }
 build = {
    type = "builtin",

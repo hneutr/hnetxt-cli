@@ -14,7 +14,7 @@ local subparsers = {
 
 local parser = argparse("hnetxt", "commands for hnetxt")
 for subparser_name, subparser_commands in pairs(subparsers) do
-    Command():add(parser, subparser_name, subparser_commands)
+    Command():add(parser, subparser_commands, subparser_name)
 end
 
 parser:parse()
