@@ -22,9 +22,11 @@ return {
     commands = {
         create = {
             args.new_project,
-            {"-s --start-date", default = os.date("%Y%m%d")},
+            {"-d --date", default = os.date("%Y%m%d")},
             opts.dir,
-            action = function(args) Project.create(args.name, args.dir, {start_date = args.start_date}) end,
+            action = function(args)
+                Project.create(args.project, args.dir, {date = args.date})
+            end,
         },
         register = {
             args.new_project,

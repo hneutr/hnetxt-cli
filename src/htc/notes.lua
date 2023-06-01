@@ -6,6 +6,7 @@ local Colors = require("htc.colors")
 local Notes = require("htl.notes")
 local Util = require("htc.util")
 local Object = require('hl.object')
+local Registry = require("htl.project.registry")
 
 local metadata_format_help_text = "\n" .. string.join("\n", {
     "* k=v → {k = v}",
@@ -134,12 +135,19 @@ function Printer:colorize(str)
     return str
 end
 
-function Printer:indent_str(str)
-    return string.rep(" ", self.indent * self.indent_size) .. str
+function Printer.indent_str(str, indent, indent_size)
+    indent = indent or 0
+    indent_size = indent_size or Printer.indent_size
+
+    return string.rep(" ", indent * indent_size) .. str
 end
 
+-- function Printer:indent_str(str)
+--     return string.rep(" ", self.indent * self.indent_size) .. str
+-- end
+
 function Printer:value_str(value)
-    return self:indent_str(self:colorize(tostring(value)))
+    return self.indent_str(self:colorize(tostring(value)), self.indent)
 end
 
 --------------------------------------------------------------------------------
@@ -204,7 +212,7 @@ function FilePrinter:value_str(value, value_notes)
         end
     end
 
-    return self:indent_str(str)
+    return self.indent_str(str, self.indent)
 end
 
 --------------------------------------------------------------------------------
@@ -351,6 +359,12 @@ function SetPrinter:note_value(note)
 end
 
 --------------------------------------------------------------------------------
+--                               ProjectPrinter                               --
+--------------------------------------------------------------------------------
+local ProjectPrinter = Printer:extend()
+ProjectPrinter.color = 'blue'
+
+--------------------------------------------------------------------------------
 --                                                                            --
 --                                                                            --
 --                                    meta                                    --
@@ -465,8 +479,8 @@ return {
             {"+F", target = "apply_config_filters", description = "don't apply config filters", switch = "off"},
             {"+D", target = "sort_by_date", description = "don't sort by date.", switch = "off"},
             {"+d", target = "show_date", description = "show note date.", switch = "on"},
-            {"--show-note", hidden = true, default = "stem", action = Util.store_default("stem")},
-            {"+b", target = "show_note", description = "show note blurb.", action = Util.store('blurb')},
+            {"--show-note", hidden = true, default = "blurb", action = Util.store_default("blurb")},
+            {"+s", target = "show_note", description = "show note stem.", action = Util.store('stem')},
             {"+p", target = "show_note", description = "show note path.", action = Util.store('name')},
             {"+C", target = "clean_note_content", description = "don't clean note content", switch = "off"},
             mutexes = {
@@ -531,6 +545,25 @@ return {
                     end,
                 },
             }
+        },
+        projects = {
+            action = function()
+                local registry = Registry():get()
+                local printer = ProjectPrinter()
+
+                Dict(registry):keys():sort():foreach(function(project)
+                    local root = registry[project]
+                    local sets = Dict.keys(Notes.sets(root)):sort()
+
+                    if #sets > 0 then
+                        print(printer:colorize(project:gsub("-", " ")) .. ":")
+
+                        sets:transform(function(v) return Path.relative_to(v, root) end)
+                        sets:transform(function(v) return printer.indent_str(Path.name(v), #Path.parts(v)) end)
+                        sets:foreach(print)
+                    end
+                end)
+            end,
         },
     },
 }
