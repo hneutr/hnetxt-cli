@@ -2,19 +2,22 @@ require("approot")("/Users/hne/lib/hnetxt-cli/")
 
 local argparse = require("argparse")
 local Command = require("htc.command")
+local List = require("hl.List")
 
-local subparsers = {
-    project = require("htc.project"),
-    journal = require("htc.journal"),
-    move = require("htc.move"),
-    remove = require("htc.remove"),
-    goals = require("htc.goals"),
-    notes = require("htc.notes"),
+local groups = {
+    {name = "Commands", commands = {"move", "remove", "journal", "goals"}},
+    {name = "Command groups", commands = {"project", "notes"}},
 }
 
-local parser = argparse("hnetxt", "commands for hnetxt")
-for subparser_name, subparser_commands in pairs(subparsers) do
-    Command():add(parser, subparser_commands, subparser_name)
+local parser = argparse("hnetxt")
+
+function add_command(name)
+    local config = require(string.format("htc.%s", name))
+    return Command():add(parser, config, name)
+end
+
+for _, group in ipairs(groups) do
+    parser:group(group.name, unpack(List(group.commands):map(add_command)))
 end
 
 parser:parse()

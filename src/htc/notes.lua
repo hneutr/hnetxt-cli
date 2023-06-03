@@ -8,13 +8,6 @@ local Util = require("htc.util")
 local Object = require('hl.object')
 local Registry = require("htl.project.registry")
 
-local metadata_format_help_text = "\n" .. string.join("\n", {
-    "* k=v → {k = v}",
-    "* k   → {k}",
-    "* k+  → {k = true}",
-    "* k-  → {k = false}",
-})
-
 --------------------------------------------------------------------------------
 --                                  Printer                                   --
 --------------------------------------------------------------------------------
@@ -371,14 +364,6 @@ ProjectPrinter.color = 'blue'
 --                                                                            --
 --                                                                            --
 --------------------------------------------------------------------------------
-local meta_help_text = "\n" .. string.join("\n", {
-    "* k=v → {key = 'k', val = 'v'}",
-    "* k   → {key = 'k'}",
-    "* k+  → {key = 'k', val = true}",
-    "* k-  → {key = 'k', val = false}",
-})
-
-
 function parse_meta_key_val(args, args_key, raw)
     local key, val
     if raw:find("%=") then
@@ -421,12 +406,60 @@ end
 --                                                                            --
 --                                                                            --
 --------------------------------------------------------------------------------
+local args = {
+    path = {
+        "path",
+        args = "1",
+        default = '.',
+        convert = Path.resolve,
+    },
+    meta = {
+        source = {
+            "source",
+            args = "1",
+            action = parse_meta_key_val,
+            description = "remove.\n" .. string.join("\n", {
+                "* k=v → {key = 'k', val = 'v'}",
+                "* k   → {key = 'k'}",
+                "* k+  → {key = 'k', val = true}",
+                "* k-  → {key = 'k', val = false}",
+            }),
+        },
+    },
+}
+
+local actions = {
+    projects = function(args)
+        local registry = Registry():get()
+        local printer = ProjectPrinter()
+
+        Dict(registry):keys():sort():foreach(function(project)
+            local root = registry[project]
+            local sets = Dict.keys(Notes.sets(root)):sort()
+
+            if #sets > 0 then
+                print(printer:colorize(project:gsub("-", " ")) .. ":")
+
+                sets:transform(function(v) return Path.relative_to(v, root) end)
+                sets:transform(function(v) return printer.indent_str(Path.name(v), #Path.parts(v)) end)
+                sets:foreach(print)
+            end
+        end)
+    end,
+}
+
 return {
-    description = "commands for notes",
+    require_command = false,
+    action = function(args)
+        if #Dict(args):keys() == 1 then
+            actions.projects(args)
+        end
+    end,
     commands = {
+        projects = {action = actions.projects},
         touch = {
             description = "make a new note",
-            {"path", args = "1", default = '.', convert = Path.resolve},
+            args.path,
             {"+d --date", description = "use today's date for the file name", switch = 'on'},
             {"+n --next", description = "use the new available index for the file name", switch = 'on'},
             mutexes = {{"-d --date", "-n --next"}},
@@ -435,7 +468,21 @@ return {
                 local note_set = Notes.path_set(path)
 
                 if note_set then
-                    path = note_set:touch(args.path, args)
+                    path = note_set:touch(path, args)
+                end
+
+                print(path)
+            end,
+        },
+        new = {
+            description = "make a new indexed note",
+            args.path,
+            action = function(args)
+                local path = args.path
+                local note_set = Notes.path_set(path)
+
+                if note_set then
+                    path = note_set:touch(path, {next = true})
                 end
 
                 print(path)
@@ -443,7 +490,7 @@ return {
         },
         list = {
             description = "list note-like things",
-            {"path", args = "1", default = '.', convert = Path.resolve},
+            args.path,
             {"+m", target = "list_metadata", description = "list metadata", switch = "on"},
             {
                 "+u",
@@ -460,7 +507,12 @@ return {
             {"+n", target = "show_notes", description = "if -m, show note content.", switch = "on"},
             {
                 "-f",
-                description = "metadata to filter entries by." .. metadata_format_help_text,
+                description = "metadata to filter entries by.\n" .. string.join("\n", {
+                    "* k=v → {k = v}",
+                    "* k   → {k}",
+                    "* k+  → {k = true}",
+                    "* k-  → {k = false}",
+                }),
                 target = "filters",
                 init = {},
                 args = "*",
@@ -510,8 +562,8 @@ return {
             commands = {
                 rm = {
                     description = "remove a field or field:value",
-                    {"source", args = "1", action = parse_meta_key_val, description = "remove." .. meta_help_text},
-                    {"path", args = "1", default = '.', convert = Path.resolve},
+                    args.meta.source,
+                    args.path,
                     action = function(args)
                         for _, note_file in ipairs(Notes.path_files(args.path)) do
                             note_file:remove_metadata(args.source.key, args.source.val)
@@ -520,9 +572,9 @@ return {
                 },
                 mv = {
                     description = "change a field or field:value",
-                    {"source", args = "1", action = parse_meta_key_val, description = "source." .. meta_help_text},
+                    args.meta.source,
                     {"target", args = "1", action = parse_meta_key_val, description = "target. format like source."},
-                    {"path", args = "1", default = '.', convert = Path.resolve},
+                    args.path,
                     action = function(args)
                         for _, note_file in ipairs(Notes.path_files(args.path)) do
                             note_file:move_metadata(
@@ -537,7 +589,7 @@ return {
                 flatten = {
                     description = "turn a list field into a string field.",
                     {"field", args = "1", description = "field."},
-                    {"path", args = "1", default = '.', convert = Path.resolve},
+                    args.path,
                     action = function(args)
                         for _, note_file in ipairs(Notes.path_files(args.path)) do
                             note_file:flatten_metadata(args.field)
@@ -545,25 +597,6 @@ return {
                     end,
                 },
             }
-        },
-        projects = {
-            action = function()
-                local registry = Registry():get()
-                local printer = ProjectPrinter()
-
-                Dict(registry):keys():sort():foreach(function(project)
-                    local root = registry[project]
-                    local sets = Dict.keys(Notes.sets(root)):sort()
-
-                    if #sets > 0 then
-                        print(printer:colorize(project:gsub("-", " ")) .. ":")
-
-                        sets:transform(function(v) return Path.relative_to(v, root) end)
-                        sets:transform(function(v) return printer.indent_str(Path.name(v), #Path.parts(v)) end)
-                        sets:foreach(print)
-                    end
-                end)
-            end,
         },
     },
 }

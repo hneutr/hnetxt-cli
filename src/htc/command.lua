@@ -22,7 +22,7 @@ function Component:attach(parent, settings, name)
     local object = parent[self.type](parent, name)
 
     for _, key in ipairs(self.keys) do
-        if settings[key] then
+        if settings[key] ~= nil then
             object[key](object, settings[key])
         end
     end
@@ -211,7 +211,6 @@ function Command:add(parent, settings, name)
     end
 
     Mutex():add_all(object, settings, components)
-
     self:add_all(object, settings)
 
     return object
