@@ -5,6 +5,7 @@ local List = require("hl.List")
 local Set = require("pl.Set")
 local Colors = require("htc.colors")
 local GoalSets = require("htl.goals.set")
+local WeekSet = require("htl.goals.set.week")
 
 local Link = require("htl.text.link")
 
@@ -28,6 +29,7 @@ return {
     },
     {"+y", description = "touch the year file", action = Util.store_to(os.date("%Y"), "to_touch")},
     {"+m", description = "touch the month file", action = Util.store_to(os.date("%Y%m"), "to_touch")},
+    {"+w", description = "touch the week file", action = Util.store_to(WeekSet.current_stem, "to_touch")},
     {
         "-a",
         description = "what to do",
