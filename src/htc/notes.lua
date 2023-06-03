@@ -548,7 +548,11 @@ return {
                 local notes = List()
                 for _, note_file in ipairs(Notes.path_files(args.path)) do
                     if args.apply_config_filters then
-                        note_file.filters = Dict.update(args.filters, note_file.filters)
+                        note_file.filters = Dict.update(
+                            args.filters,
+                            note_file.filters,
+                            {start = true, ["end"] = true}
+                        )
                     end
 
                     notes:append(note_file:get_list_info(args.value_type_condition, args.path))

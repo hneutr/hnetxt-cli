@@ -13,6 +13,7 @@ Component.keys = {
     "action",
     "target",
     "argname",
+    "defmode",
 }
 Component.type = ''
 
