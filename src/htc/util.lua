@@ -51,6 +51,12 @@ function M.store(value)
     end
 end
 
+function M.store_to(value, key)
+    return function(args)
+        args[key] = value
+    end
+end
+
 function M.store_default(value)
     return function(args, args_key)
         if not args[args_key] then
