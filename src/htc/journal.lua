@@ -10,6 +10,7 @@ local Config = require("htl.config")
 local Project = require("htl.project")
 local Link = require("htl.text.link")
 
+local max_line_length = 80
 local divider = tostring(require("htl.text.divider")("large"))
 
 local date_parts = {
@@ -34,18 +35,11 @@ function get_journal_dir(project_name)
     return Path.parent(Journal(project_dir))
 end
 
-function touch(args)
-    local path = Path.joinpath(args.dir, args.date .. ".md")
-    print(path)
-end
-
-function enforce_line_length(line, length)
-    length = length or 80
-
+function enforce_line_length(line)
     local lines = List()
     local current_line = ""
     for _, word in ipairs(line:split(" ")) do
-        if #current_line + #word > length then
+        if #current_line + #word > max_line_length then
             lines:append(current_line)
             current_line = ""
         end
@@ -137,24 +131,14 @@ end
 
 return {
     description = "return the path to a journal",
-    {
-        "-a --action",
-        description = "what to do",
-        default = "touch",
-        choices = {"touch", "show", "convert"},
-        convert = {
-            show = show,
-            touch = function(args) print(Path.joinpath(args.dir, args.date .. ".md")) end,
-            convert = convert,
-        },
-    },
     {"--dir", hidden = true, default = Util.default_project(), convert = get_journal_dir},
     {"project", description = "project name", args = "?", target = 'dir', convert = get_journal_dir},
     {"+w", target = "write", default = false, action='store_true'},
-    {"-d --date", default = os.date("%Y%m%d")},
-    {"-y --year"},
+    {"-d", target = "date", default = os.date("%Y%m%d")},
+    {"-y", target = "year"},
     {
-        "-m --month",
+        "-m",
+        target = "month",
         convert = function(m)
             if #m == 1 then
                 m = "0" .. m
@@ -163,7 +147,8 @@ return {
         end
     },
     {
-        "-n --number",
+        "-n",
+        target = "number",
         default = 1,
         convert = function(n)
             if n:endswith("%-") then
@@ -172,6 +157,18 @@ return {
             
             return tonumber(n)
         end,
+    },
+    {
+        "-a",
+        target = "action",
+        description = "what to do",
+        default = "touch",
+        choices = {"touch", "show", "convert"},
+        convert = {
+            show = show,
+            convert = convert,
+            touch = function(args) print(Path.joinpath(args.dir, args.date .. ".md")) end,
+        },
     },
     action = function(args)
         args.dir = args.dir or Config.get("journal").global_dir
