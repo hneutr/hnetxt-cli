@@ -6,7 +6,7 @@ local List = require("hl.List")
 
 local groups = {
     {name = "Commands", commands = {"move", "remove", "journal", "goals"}},
-    {name = "Command groups", commands = {"project", "notes", "newjournal"}},
+    {name = "Command groups", commands = {"project", "notes"}},
 }
 
 local parser = argparse("hnetxt")
