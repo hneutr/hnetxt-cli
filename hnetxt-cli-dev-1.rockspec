@@ -26,6 +26,7 @@ build = {
       ["htc.move"] = "src/htc/move.lua",
       ["htc.remove"] = "src/htc/remove.lua",
       ["htc.goals"] = "src/htc/goals.lua",
+      ["htc.aim"] = "src/htc/aim.lua",
       ["htc.notes"] = "src/htc/notes.lua",
       ["htc.colors"] = "src/htc/colors.lua",
       ["htc.colorize"] = "src/htc/colorize.lua",
