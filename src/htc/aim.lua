@@ -27,7 +27,7 @@ local function shorthand_help()
 end
 
 return {
-    description = "touch a goalset and return its path.",
+    description = "touch and return a goalset path.",
     {
         "path",
         description = "a set path or shorthand: " .. shorthand_help(),
