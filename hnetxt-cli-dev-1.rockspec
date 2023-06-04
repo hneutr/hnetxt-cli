@@ -28,6 +28,7 @@ build = {
       ["htc.goals"] = "src/htc/goals.lua",
       ["htc.notes"] = "src/htc/notes.lua",
       ["htc.colors"] = "src/htc/colors.lua",
+      ["htc.colorize"] = "src/htc/colorize.lua",
    }
 }
 test = {

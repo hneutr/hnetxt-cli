@@ -1,48 +1,57 @@
-local Util = require("htc.util")
 local Path = require("hl.path")
-local Dict = require("hl.Dict")
 local List = require("hl.List")
-local Set = require("pl.Set")
-local Colors = require("htc.colors")
 local GoalSets = require("htl.goals.set")
 local WeekSet = require("htl.goals.set.week")
+local Colorize = require("htc.colorize")
 
-local Link = require("htl.text.link")
+local shorthands = {
+    d = os.date("%Y%m%d"),
+    w = WeekSet.current_stem,
+    m = os.date("%Y%m"),
+    y = os.date("%Y"),
+}
+
+local function convert_shorthand(set)
+    set = shorthands[set or 'd'] or set
+
+    if #Path.suffix(set) == 0 then
+        set = set .. ".md"
+    end
+
+    return set
+end
+
+local function shorthand_help()
+    return "\n" .. List({'d', 'w', 'm', 'y'}):transform(function(s)
+        return string.format(" %s = %s", s, convert_shorthand(s))
+    end):join("\n") .. "\n"
+end
 
 return {
-    description = "return the path to a journal",
-    {
-        "--to_touch",
-        hidden = true,
-        default = os.date("%Y%m%d"),
-        action = Util.store_default(os.date("%Y%m%d")),
-    },
-    {
-        "path",
-        description = "path to touch",
-        args = "?",
-        action = function(args, _, raw)
-            if raw ~= nil then
-                args.to_touch = raw
-            end
-        end,
-    },
-    {"+y", description = "touch the year file", action = Util.store_to(os.date("%Y"), "to_touch")},
-    {"+m", description = "touch the month file", action = Util.store_to(os.date("%Y%m"), "to_touch")},
-    {"+w", description = "touch the week file", action = Util.store_to(WeekSet.current_stem, "to_touch")},
-    {
-        "-a",
-        description = "what to do",
-        target = "action",
-        default = "touch",
-        choices = {"touch", "to_close", "to_create"},
-        convert = {
-            touch = function(args) print(GoalSets.touch(args.to_touch)) end,
-            to_close = function(args) GoalSets.to_close():foreach(print) end,
-            to_create = function(args) GoalSets.to_create():foreach(print) end,
+    commands = {
+        aim = {
+            description = "touch a goalset and return its path.",
+            {
+                "path",
+                description = "a set path or shorthand: " .. shorthand_help(),
+                default = convert_shorthand('d'),
+                convert = convert_shorthand,
+            },
+            action = function(args)
+                print(GoalSets.touch(args.path))
+            end,
+        },
+        goals = {
+            commands = {
+                to_close = {
+                    description = "list past but unclosed goalsets.",
+                    action = function() GoalSets.to_close():foreach(print) end,
+                },
+                to_create = {
+                    description = "list current but empty goalsets.",
+                    action = function() GoalSets.to_create():foreach(print) end,
+                },
+            },
         },
     },
-    action = function(args)
-        args.action(args)
-    end,
 }
